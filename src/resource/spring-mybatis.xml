@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context" xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+	    http://www.springframework.org/schema/beans/spring-beans-4.3.xsd
+	    http://www.springframework.org/schema/context
+	    http://www.springframework.org/schema/context/spring-context.xsd
+	    http://www.springframework.org/schema/tx
+	    http://www.springframework.org/schema/tx/spring-tx.xsd">
+
+	<!-- 1.连接数据库相关信息的配置文件位置 -->
+	<context:property-placeholder location="classpath:resource/db.properties" />
+	<!-- 2.配置数据源 这里用Druid -->
+	<bean id="dataSource" class="com.alibaba.druid.pool.DruidDataSource"
+		init-method="init" destroy-method="close">
+		<property name="driverClassName" value="${jdbc.driver}" />
+		<property name="url" value="${jdbc.url}" />
+		<property name="username" value="${jdbc.username}" />
+		<property name="password" value="${jdbc.password}" />
+		<!-- 初始化连接大小 -->
+		<property name="initialSize" value="0" />
+		<!-- 连接池最大使用连接数量 -->
+		<property name="maxActive" value="20" />
+
+		<!-- 连接池最小空闲 -->
+		<property name="minIdle" value="0" />
+		<!-- 获取连接最大等待时间 -->
+		<property name="maxWait" value="60000" />
+	</bean>
+	<!--3.会话工厂bean sqlSessionFactoryBean -->
+	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSource"></property>
+		<!-- 别名，这样在Mapper.xml文件里面就可以直接写对应的类名 而不用写全路径名了 -->
+		<property name="typeAliasesPackage" value="com.gxnu.study.bean" />
+		<!-- 这会从类路径下加载在 com.gxnu.study.mapper 包和它的子包中所有的 MyBatis 映射器 XML 文件。 -->
+		<property name="mapperLocations" value="classpath:com/gxnu/study/dao/mapping/*.xml"></property>
+	</bean>
+	<!--4.自动扫描对象关系映射， 它 将 会 查 找 类 路 径 下 的 映 射 器 并 自 动 将 它 们 创 建 成 MapperFactoryBean -->
+	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+		<property name="basePackage" value="com.gxnu.study.dao" />
+		<!--指定会话工厂，如果当前上下文中只定义了一个则该属性可省去 -->
+		<property name="sqlSessionFactoryBeanName" value="sqlSessionFactory" />
+	</bean>
+	<!-- 5.声明式事务，引入数据源 -->
+	<!--定义事物管理器，由spring管理事务 -->
+	<bean id="transactionManager"
+		class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSource" />
+	</bean>
+	<!--支持注解驱动的事务管理 事务管理 -->
+	<tx:annotation-driven transaction-manager="transactionManager" />
+	<!--6.容器自动扫描IOC组件 -->
+	<context:component-scan base-package="com.gxnu.study"></context:component-scan>
+
+</beans>
